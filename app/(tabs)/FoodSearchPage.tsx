@@ -32,20 +32,22 @@ export default function FoodSearchPage() {
 
   const searchProducts = async () => {
     if (!query.trim()) return;
+  
     setLoading(true);
     setProducts([]);
 
     try {
-      const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
-        query
-      )}&search_simple=1&json=1&page_size=20`;
       const response = await fetch(url);
       const json = await response.json();
+  
       if (json.products) {
-        setProducts(json.products);
+        const filtered = json.products.filter(p =>
+          p.product_name &&
+          p.countries_tags?.includes('en:singapore') &&
+          (p.ecoscore_grade || p.carbon_footprint_100g !== undefined)
+        );
+        setProducts(filtered);
       }
-    } catch (e) {
-      console.error('Error fetching Open Food Facts', e);
     }
     setLoading(false);
   };
