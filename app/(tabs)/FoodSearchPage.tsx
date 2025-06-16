@@ -15,15 +15,14 @@ export default function FoodSearchPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Color helper for Nutri and Eco Scores
   const scoreColor = (score) => {
     if (!score) return '#aaa';
     const c = score.toUpperCase();
-    if (c === 'A') return '#4CAF50'; // Green
-    if (c === 'B') return '#8BC34A'; // Light Green
-    if (c === 'C') return '#FFC107'; // Amber
-    if (c === 'D') return '#FF9800'; // Orange
-    if (c === 'E') return '#F44336'; // Red
+    if (c === 'A') return '#4CAF50';
+    if (c === 'B') return '#8BC34A';
+    if (c === 'C') return '#FFC107';
+    if (c === 'D') return '#FF9800';
+    if (c === 'E') return '#F44336';
     return '#aaa';
   };
 
@@ -31,30 +30,33 @@ export default function FoodSearchPage() {
     if (!query.trim()) return;
     setLoading(true);
     setProducts([]);
-
+  
     try {
-      const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
+      const url = `https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(
         query
-      )}&search_simple=1&json=1&page_size=20`;
+      )}&fields=product_name,ecoscore_grade,ecoscore_score,nutrition_grades,carbon_footprint_100g,image_front_small_url,packaging,code&page_size=20`;
+      
       const response = await fetch(url);
       const json = await response.json();
       if (json.products) {
         setProducts(json.products);
       }
     } catch (e) {
-      console.error('Error fetching Open Food Facts', e);
+      console.error('Error fetching Open Food Facts (v2)', e);
     }
+  
     setLoading(false);
   };
 
   const renderItem = ({ item }) => {
-    // Some items may lack these fields; provide defaults
     const nutriScore = item.nutrition_grades || null;
     const ecoScore = item.ecoscore_grade || null;
-    const packaging = item.packaging || 'N/A';
+    const ecoScoreValue = item.ecoscore_score ?? null;
+    const carbonFootprint = item.carbon_footprint_100g ?? 'N/A';
+   
     const productName = item.product_name || 'Unnamed product';
     const imageUrl = item.image_front_small_url || null;
-
+  
     return (
       <View style={styles.card}>
         {imageUrl ? (
@@ -74,12 +76,16 @@ export default function FoodSearchPage() {
               <Text style={styles.scoreText}>Eco: {ecoScore ? ecoScore.toUpperCase() : '?'}</Text>
             </View>
           </View>
-          <Text style={styles.packaging}>Packaging: {packaging}</Text>
+          {ecoScoreValue !== null && (
+            <Text style={styles.packaging}>Eco Score: {ecoScoreValue}/100</Text>
+          )}
+          <Text style={styles.packaging}>CO₂/100g: {carbonFootprint}</Text>
+         
         </View>
       </View>
     );
   };
-
+  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Sustainable Food Search</Text>
@@ -113,42 +119,41 @@ export default function FoodSearchPage() {
   );
 }
 
-
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-    title: { fontSize: 22, fontWeight: 'bold', marginBottom: 12, textAlign: 'center' },
-    searchRow: { flexDirection: 'row', marginBottom: 12, alignItems: 'center' },
-    searchInput: {
-      flex: 1,
-      borderColor: '#ccc',
-      borderWidth: 1,
-      borderRadius: 6,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      marginRight: 8,
-      fontSize: 16,
-    },
-    card: {
-      flexDirection: 'row',
-      borderColor: '#ddd',
-      borderWidth: 1,
-      borderRadius: 10,
-      padding: 12,
-      marginBottom: 12,
-      backgroundColor: '#fafafa',
-      elevation: 1,
-    },
-    image: { width: 80, height: 80, borderRadius: 8, backgroundColor: '#eee' },
-    imagePlaceholder: { justifyContent: 'center', alignItems: 'center' },
-    info: { flex: 1, paddingLeft: 12, justifyContent: 'center' },
-    productName: { fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
-    scoresRow: { flexDirection: 'row', marginBottom: 6 },
-    scoreBadge: {
-      paddingVertical: 4,
-      paddingHorizontal: 8,
-      borderRadius: 12,
-      marginRight: 8,
-    },
-    scoreText: { color: '#fff', fontWeight: '600' },
-    packaging: { fontStyle: 'italic', color: '#555' },
-  });
+  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 12, textAlign: 'center' },
+  searchRow: { flexDirection: 'row', marginBottom: 12, alignItems: 'center' },
+  searchInput: {
+    flex: 1,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 8,
+    fontSize: 16,
+  },
+  card: {
+    flexDirection: 'row',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: '#fafafa',
+    elevation: 1,
+  },
+  image: { width: 80, height: 80, borderRadius: 8, backgroundColor: '#eee' },
+  imagePlaceholder: { justifyContent: 'center', alignItems: 'center' },
+  info: { flex: 1, paddingLeft: 12, justifyContent: 'center' },
+  productName: { fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
+  scoresRow: { flexDirection: 'row', marginBottom: 6 },
+  scoreBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  scoreText: { color: '#fff', fontWeight: '600' },
+  packaging: { fontStyle: 'italic', color: '#555' },
+});
