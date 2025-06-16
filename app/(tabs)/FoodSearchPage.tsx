@@ -28,21 +28,34 @@ export default function FoodSearchPage() {
 
   const searchProducts = async () => {
     if (!query.trim()) return;
+  
     setLoading(true);
     setProducts([]);
   
     try {
-      const url = `https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(
-        query
-      )}&fields=product_name,ecoscore_grade,ecoscore_score,nutrition_grades,carbon_footprint_100g,image_front_small_url,packaging,code&page_size=20`;
-      
+      const url = `https://world.openfoodfacts.org/cgi/search.pl?` +
+        `search_terms=${encodeURIComponent(query)}` +
+        `&search_simple=1` +
+        `&action=process` +
+        `&json=1` +
+        `&fields=product_name,ecoscore_grade,ecoscore_score,carbon_footprint_100g,image_front_small_url,countries_tags,code` +
+        `&countries_tags=singapore` +
+        `&lang=en` +
+        `&page_size=20`;
+  
       const response = await fetch(url);
       const json = await response.json();
+  
       if (json.products) {
-        setProducts(json.products);
+        const filtered = json.products.filter(p =>
+          p.product_name &&
+          p.countries_tags?.includes('en:singapore') &&
+          (p.ecoscore_grade || p.carbon_footprint_100g !== undefined)
+        );
+        setProducts(filtered);
       }
-    } catch (e) {
-      console.error('Error fetching Open Food Facts (v2)', e);
+    } catch (error) {
+      console.error('Search error:', error);
     }
   
     setLoading(false);
@@ -51,12 +64,10 @@ export default function FoodSearchPage() {
   const renderItem = ({ item }) => {
     const nutriScore = item.nutrition_grades || null;
     const ecoScore = item.ecoscore_grade || null;
-    const ecoScoreValue = item.ecoscore_score ?? null;
-    const carbonFootprint = item.carbon_footprint_100g ?? 'N/A';
-   
+    const packaging = item.packaging || 'N/A';
     const productName = item.product_name || 'Unnamed product';
     const imageUrl = item.image_front_small_url || null;
-  
+
     return (
       <View style={styles.card}>
         {imageUrl ? (
@@ -76,16 +87,12 @@ export default function FoodSearchPage() {
               <Text style={styles.scoreText}>Eco: {ecoScore ? ecoScore.toUpperCase() : '?'}</Text>
             </View>
           </View>
-          {ecoScoreValue !== null && (
-            <Text style={styles.packaging}>Eco Score: {ecoScoreValue}/100</Text>
-          )}
-          <Text style={styles.packaging}>CO₂/100g: {carbonFootprint}</Text>
-         
+          <Text style={styles.packaging}>Packaging: {packaging}</Text>
         </View>
       </View>
     );
   };
-  
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Sustainable Food Search</Text>
