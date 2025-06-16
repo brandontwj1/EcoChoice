@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -7,22 +8,25 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function FoodSearchPage() {
   const [query, setQuery] = useState('');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
+  // Color helper for Nutri and Eco Scores
   const scoreColor = (score) => {
     if (!score) return '#aaa';
     const c = score.toUpperCase();
-    if (c === 'A') return '#4CAF50';
-    if (c === 'B') return '#8BC34A';
-    if (c === 'C') return '#FFC107';
-    if (c === 'D') return '#FF9800';
-    if (c === 'E') return '#F44336';
+    if (c === 'A') return '#4CAF50'; // Green
+    if (c === 'B') return '#8BC34A'; // Light Green
+    if (c === 'C') return '#FFC107'; // Amber
+    if (c === 'D') return '#FF9800'; // Orange
+    if (c === 'E') return '#F44336'; // Red
     return '#aaa';
   };
 
@@ -31,18 +35,8 @@ export default function FoodSearchPage() {
   
     setLoading(true);
     setProducts([]);
-  
+
     try {
-      const url = `https://world.openfoodfacts.org/cgi/search.pl?` +
-        `search_terms=${encodeURIComponent(query)}` +
-        `&search_simple=1` +
-        `&action=process` +
-        `&json=1` +
-        `&fields=product_name,ecoscore_grade,ecoscore_score,carbon_footprint_100g,image_front_small_url,countries_tags,code` +
-        `&countries_tags=singapore` +
-        `&lang=en` +
-        `&page_size=20`;
-  
       const response = await fetch(url);
       const json = await response.json();
   
@@ -54,14 +48,12 @@ export default function FoodSearchPage() {
         );
         setProducts(filtered);
       }
-    } catch (error) {
-      console.error('Search error:', error);
     }
-  
     setLoading(false);
   };
 
   const renderItem = ({ item }) => {
+    // Some items may lack these fields; provide defaults
     const nutriScore = item.nutrition_grades || null;
     const ecoScore = item.ecoscore_grade || null;
     const packaging = item.packaging || 'N/A';
@@ -69,27 +61,32 @@ export default function FoodSearchPage() {
     const imageUrl = item.image_front_small_url || null;
 
     return (
-      <View style={styles.card}>
-        {imageUrl ? (
-          <Image source={{ uri: imageUrl }} style={styles.image} />
-        ) : (
-          <View style={[styles.image, styles.imagePlaceholder]}>
-            <Text style={{ color: '#888' }}>No Image</Text>
-          </View>
-        )}
-        <View style={styles.info}>
-          <Text style={styles.productName}>{productName}</Text>
-          <View style={styles.scoresRow}>
-            <View style={[styles.scoreBadge, { backgroundColor: scoreColor(nutriScore) }]}>
-              <Text style={styles.scoreText}>Nutri: {nutriScore ? nutriScore.toUpperCase() : '?'}</Text>
+      <TouchableOpacity
+        onPress={() => router.push({ pathname: '/product-details', params: { code: item.code } })}
+        activeOpacity={0.7}
+      >
+        <View style={styles.card}>
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={styles.image} />
+          ) : (
+            <View style={[styles.image, styles.imagePlaceholder]}>
+              <Text style={{ color: '#888' }}>No Image</Text>
             </View>
-            <View style={[styles.scoreBadge, { backgroundColor: scoreColor(ecoScore) }]}>
-              <Text style={styles.scoreText}>Eco: {ecoScore ? ecoScore.toUpperCase() : '?'}</Text>
+          )}
+          <View style={styles.info}>
+            <Text style={styles.productName}>{productName}</Text>
+            <View style={styles.scoresRow}>
+              <View style={[styles.scoreBadge, { backgroundColor: scoreColor(nutriScore) }]}>
+                <Text style={styles.scoreText}>Nutri: {nutriScore ? nutriScore.toUpperCase() : '?'}</Text>
+              </View>
+              <View style={[styles.scoreBadge, { backgroundColor: scoreColor(ecoScore) }]}>
+                <Text style={styles.scoreText}>Eco: {ecoScore ? ecoScore.toUpperCase() : '?'}</Text>
+              </View>
             </View>
+            <Text style={styles.packaging}>Packaging: {packaging}</Text>
           </View>
-          <Text style={styles.packaging}>Packaging: {packaging}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
