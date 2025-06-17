@@ -21,7 +21,7 @@ EcoChoice is a mobile app that helps supermarket shoppers make environmentally f
    ```bash
    npx expo start
    ```
-This will then open Expo Dev Tools in your browser.
+   This will then open Expo Dev Tools in your browser.
 
 4. Run the app on your device
 - On physical device: Install the Expo Go app from the App Store or Google Play. Scan the QR code in the terminal or browser.
@@ -34,7 +34,7 @@ If you would like to contribute, please follow these steps:
 2. Create a feature branch: ```bash git checkout -b feature/some-feature ```
 3. Commit your changes: ```bash git commit -m "Add some feature" ```
 4. Push to your branch: ```bash git push origin feature/some-feature ```
-5.Open a Pull Request and describe your changes
+5. Open a Pull Request and describe your changes
 
 Please follow the existing code style and ensure tests pass before submitting.
 
