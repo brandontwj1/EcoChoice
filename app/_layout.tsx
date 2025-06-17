@@ -10,7 +10,7 @@ export default function RootLayout() {
   });
 
   if (!loaded) {
-    // Async font loading only occurs in development.
+
     return null;
   }
 
@@ -22,7 +22,7 @@ export default function RootLayout() {
         <Stack.Screen name="ProductDetails" options={{
           title: "",
           headerBackTitle: "Back",
-          headerStyle: { backgroundColor: "#f8faf7" }, // Set your desired color here
+          headerStyle: { backgroundColor: "#f8faf7" }, 
           headerTintColor: "#388e3c", 
         }} />
       </Stack>

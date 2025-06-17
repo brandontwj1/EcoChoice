@@ -40,7 +40,7 @@ export default function ProductDetails() {
     );
   }
 
-  // Helper function to generate icon rating
+
   const renderIcons = (count, icon) => {
     if (!Number.isFinite(count) || count <= 0) return <Text style={styles.iconTextLarge}>N/A</Text>;
     const rounded = Math.max(0, Math.min(5, Math.round(count)));
@@ -52,7 +52,6 @@ export default function ProductDetails() {
     );
   };
 
-  // Eco-Score icons (0-100 score to 1-5 leaves)
   const ecoScore = product.ecoscore_score;
   const ecoCount = ecoScore !== undefined ? ecoScore / 20 : null;
   const ecoDescription = ecoCount
@@ -63,7 +62,6 @@ export default function ProductDetails() {
       : `🍂 Low Eco-Score. Consider more sustainable alternatives.`
     : 'No data available.';
 
-  // Carbon Footprint icons (lower CO2e/kg is better)
   const carbonFootprint = product.ecoscore_data?.agribalyse?.co2_total;
   let carbonCount = null;
   if (carbonFootprint !== undefined) {
@@ -85,7 +83,6 @@ export default function ProductDetails() {
       : `🌍 Very high CO₂ emissions. Avoid if possible.`
     : 'No data available.';
 
-  // Packaging Sustainability icons (0-100 score to 1-5 recycle symbols)
   const packagingScore = product.ecoscore_data?.adjustments?.packaging?.score;
   const packagingCount = packagingScore !== undefined ? packagingScore / 20 : null;
   let packagingDescription = 'No data available.';
@@ -109,13 +106,11 @@ export default function ProductDetails() {
     : null;
   const packagingScoreValue = typeof packagingScore === 'number' ? packagingScore : null;
 
-  // Only include available scores in the average
   const scoreValues = [ecoScoreValue, carbonScoreValue, packagingScoreValue].filter(v => typeof v === 'number');
   const overallScore = scoreValues.length > 0
     ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length)
     : null;
 
-  // Helper for ring color
   const getRingColor = (score) => {
     if (score === null) return '#ccc';
     if (score >= 80) return '#4CAF50';
@@ -125,7 +120,6 @@ export default function ProductDetails() {
     return '#F44336';
   };
 
-  // Helper for overall description
   const getOverallDescription = (score) => {
     if (score === null) return "No overall sustainability data available.";
     if (score >= 90) return "🌟 Outstanding sustainability!";
@@ -252,7 +246,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
     paddingLeft: 6,
-    height: 110, // Match image height for even vertical spacing
+    height: 110, 
   },
   name: {
     fontSize: 23,

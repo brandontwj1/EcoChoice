@@ -23,30 +23,30 @@ export default function FoodSearchPage() {
   if (!score) return '#aaa';
   const c = score.toUpperCase();
 
-  if (c === 'A+' || c === 'A-PLUS') return '#2E7D32';  // Dark green (best)
-  if (c === 'A') return '#4CAF50';                     // Light green
-  if (c === 'B') return '#8BC34A';
-  if (c === 'C') return '#FFC107';
-  if (c === 'D') return '#FF9800';
-  if (c === 'E') return '#F44336';
+  if (c === 'A+' || c === 'A-PLUS') return '#2E7D32'; 
+  if (c === 'A') return '#4CAF50';                     
+  if (c === 'B') return '#8BC34A';                      
+  if (c === 'C') return '#FFC107';                      
+  if (c === 'D') return '#FF9800';                     
+  if (c === 'E') return '#F44336';                     
 
-  return '#aaa'; // Default gray
+  return '#aaa'; 
 };
 
-  // Function to normalize product names for comparison
+
   const normalizeProductName = (name) => {
     if (!name) return '';
     return name
       .toLowerCase()
-      .replace(/[^\w\s]/g, '') // Remove special characters
-      .replace(/\s+/g, ' ') // Normalize whitespace
-      .replace(/\b(original|classic|traditional|regular)\b/g, '') // Remove common variants
-      .replace(/\b\d+\s*(g|kg|ml|l|oz|lb)\b/g, '') // Remove weights/volumes
-      .replace(/\b(pack|jar|bottle|can|box)\b/g, '') // Remove packaging words
+      .replace(/[^\w\s]/g, '') 
+      .replace(/\s+/g, ' ') 
+      .replace(/\b(original|classic|traditional|regular)\b/g, '') 
+      .replace(/\b\d+\s*(g|kg|ml|l|oz|lb)\b/g, '') 
+      .replace(/\b(pack|jar|bottle|can|box)\b/g, '') 
       .trim();
   };
 
-  // Function to calculate similarity between two strings
+
   const calculateSimilarity = (str1, str2) => {
     const longer = str1.length > str2.length ? str1 : str2;
     const shorter = str1.length > str2.length ? str2 : str1;
@@ -54,7 +54,7 @@ export default function FoodSearchPage() {
     return (longer.length - editDistance) / longer.length;
   };
 
-  // Levenshtein distance calculation
+
   const getEditDistance = (str1, str2) => {
     const matrix = [];
     for (let i = 0; i <= str2.length; i++) {
@@ -79,7 +79,7 @@ export default function FoodSearchPage() {
     return matrix[str2.length][str1.length];
   };
 
-  // Method 1: Simple name-based deduplication
+
   const deduplicateByName = (products) => {
     const seen = new Set();
     return products.filter(product => {
@@ -93,26 +93,26 @@ export default function FoodSearchPage() {
   };
 
 
-  // Helper function to score product quality (for choosing best duplicate)
+  
   const getProductQualityScore = (product) => {
     let score = 0;
     
-    // Prefer products with images
+
     if (product.image_front_small_url) score += 2;
     
-    // Prefer products with eco score
+ 
     if (product.ecoscore_grade) score += 2;
     
-    // Prefer products with nutrition grade
+
     if (product.nutrition_grades) score += 2;
     
-    // Prefer products with carbon footprint data
+
     if (product.carbon_footprint_100g !== undefined) score += 1;
     
-    // Prefer products with more complete names (less likely to be partial/broken)
+   
     if (product.product_name && product.product_name.length > 10) score += 1;
     
-    // Prefer products with brand information
+   
     if (product.brands) score += 1;
     
     return score;
@@ -133,7 +133,7 @@ export default function FoodSearchPage() {
         `&fields=product_name,ecoscore_grade,ecoscore_score,carbon_footprint_100g,image_front_small_url,countries_tags,code,brands,nutrition_grades,packaging,ecoscore_data` +
         `&countries_tags=singapore` +
         `&lang=en` +
-        `&page_size=50`; // Increased to get more results before filtering
+        `&page_size=50`; 
 
       const response = await fetch(url);
       const json = await response.json();
@@ -161,10 +161,10 @@ export default function FoodSearchPage() {
           (typeof p.ecoscore_score === 'number' || typeof p.carbon_footprint_100g === 'number')
         );
         
-        // Apply deduplication - Simple name-based 
+
        filtered = deduplicateByName(filtered);
 
-        // Sort by quality score to show best products first
+
         filtered.sort((a, b) => {
           const aScore = calculateOverallSustainabilityScore(a) ?? -1;
           const bScore = calculateOverallSustainabilityScore(b) ?? -1;
@@ -173,7 +173,7 @@ export default function FoodSearchPage() {
         
         console.log('Sorted scores:', filtered.slice(0, 15).map(p => calculateOverallSustainabilityScore(p)));
 
-        // Limit final results
+
         setProducts(filtered.slice(0, 15));
       }
     } catch (error) {
