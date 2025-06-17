@@ -190,6 +190,7 @@ export default function FoodSearchPage() {
     const productName = item.product_name || 'Unnamed product';
     const imageUrl = item.image_front_small_url || null;
     const brand = item.brands?.split(',')[0]?.trim() || '';
+    const carbon = item.ecoscore_data?.agribalyse?.co2_total;
 
     return (
       <TouchableOpacity
@@ -213,7 +214,7 @@ export default function FoodSearchPage() {
               </View>
             </View>
             <Text style={styles.packaging}>
-              Carbon: {item.carbon_footprint_100g !== undefined ? `${item.carbon_footprint_100g}g CO₂/100g` : 'N/A'}
+              Carbon: {typeof carbon === 'number' ? `${carbon.toFixed(2)} kg CO₂e/kg` : 'N/A'}
               </Text>
           </View>
         </View>
