@@ -20,15 +20,18 @@ export default function FoodSearchPage() {
   const router = useRouter();
 
   const scoreColor = (score) => {
-    if (!score) return '#aaa';
-    const c = score.toUpperCase();
-    if (c === 'A') return '#4CAF50';
-    if (c === 'B') return '#8BC34A';
-    if (c === 'C') return '#FFC107';
-    if (c === 'D') return '#FF9800';
-    if (c === 'E') return '#F44336';
-    return '#aaa';
-  };
+  if (!score) return '#aaa';
+  const c = score.toUpperCase();
+
+  if (c === 'A+' || c === 'A-PLUS') return '#2E7D32';  // Dark green (best)
+  if (c === 'A') return '#4CAF50';                     // Light green
+  if (c === 'B') return '#8BC34A';
+  if (c === 'C') return '#FFC107';
+  if (c === 'D') return '#FF9800';
+  if (c === 'E') return '#F44336';
+
+  return '#aaa'; // Default gray
+};
 
   // Function to normalize product names for comparison
   const normalizeProductName = (name) => {
@@ -127,13 +130,29 @@ export default function FoodSearchPage() {
         `&search_simple=1` +
         `&action=process` +
         `&json=1` +
-        `&fields=product_name,ecoscore_grade,ecoscore_score,carbon_footprint_100g,image_front_small_url,countries_tags,code,brands,nutrition_grades,packaging` +
+        `&fields=product_name,ecoscore_grade,ecoscore_score,carbon_footprint_100g,image_front_small_url,countries_tags,code,brands,nutrition_grades,packaging,ecoscore_data` +
         `&countries_tags=singapore` +
         `&lang=en` +
         `&page_size=50`; // Increased to get more results before filtering
 
       const response = await fetch(url);
       const json = await response.json();
+
+      const calculateOverallSustainabilityScore = (product) => {
+  const ecoScore = typeof product.ecoscore_score === 'number' ? product.ecoscore_score : null;
+
+  const carbonRaw = product.ecoscore_data?.agribalyse?.co2_total;
+  const carbonScore = typeof carbonRaw === 'number'
+    ? Math.max(0, Math.min(100, 100 - (carbonRaw * 10)))
+    : null;
+
+  const packagingScore = product.ecoscore_data?.adjustments?.packaging?.score;
+
+  const scoreValues = [ecoScore, carbonScore, packagingScore].filter(v => typeof v === 'number');
+  return scoreValues.length > 0
+    ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length)
+    : -1;
+};
 
       if (json.products) {
         let filtered = json.products.filter(p =>
@@ -146,8 +165,14 @@ export default function FoodSearchPage() {
        filtered = deduplicateByName(filtered);
 
         // Sort by quality score to show best products first
-        filtered.sort((a, b) => getProductQualityScore(b) - getProductQualityScore(a));
+        filtered.sort((a, b) => {
+          const aScore = calculateOverallSustainabilityScore(a) ?? -1;
+          const bScore = calculateOverallSustainabilityScore(b) ?? -1;
+          return bScore - aScore;
+        });
         
+        console.log('Sorted scores:', filtered.slice(0, 15).map(p => calculateOverallSustainabilityScore(p)));
+
         // Limit final results
         setProducts(filtered.slice(0, 15));
       }
