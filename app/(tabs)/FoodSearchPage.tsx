@@ -31,26 +31,26 @@ export default function FoodSearchPage() {
   };
 
   const searchProducts = async () => {
-    if (!query.trim()) return;
-  
-    setLoading(true);
-    setProducts([]);
+  if (!query.trim()) return;
+  setLoading(true);
+  setProducts([]);
 
-    try {
-      const response = await fetch(url);
-      const json = await response.json();
-  
-      if (json.products) {
-        const filtered = json.products.filter(p =>
-          p.product_name &&
-          p.countries_tags?.includes('en:singapore') &&
-          (p.ecoscore_grade || p.carbon_footprint_100g !== undefined)
-        );
-        setProducts(filtered);
-      }
+  try {
+    const url = `https://world.openfoodfacts.org/api/v2/search?search_terms=${encodeURIComponent(
+      query
+    )}&fields=product_name,ecoscore_grade,ecoscore_score,nutrition_grades,carbon_footprint_100g,image_front_small_url,packaging,code&page_size=20`;
+    
+    const response = await fetch(url);
+    const json = await response.json();
+    if (json.products) {
+      setProducts(json.products);
     }
-    setLoading(false);
-  };
+  } catch (e) {
+    console.error('Error fetching Open Food Facts (v2)', e);
+  }
+
+  setLoading(false);
+};
 
   const renderItem = ({ item }) => {
     // Some items may lack these fields; provide defaults
@@ -62,7 +62,7 @@ export default function FoodSearchPage() {
 
     return (
       <TouchableOpacity
-        onPress={() => router.push({ pathname: '/product-details', params: { code: item.code } })}
+        onPress={() => router.push({ pathname: '/ProductDetails', params: { code: item.code } })}
         activeOpacity={0.7}
       >
         <View style={styles.card}>
