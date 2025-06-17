@@ -13,13 +13,13 @@ EcoChoice is a mobile app that helps supermarket shoppers make environmentally f
 2. Install dependencies
    Make sure you have Node.js and Expo CLI installed
    ```bash
-  npm install -g expo-cli
-  npm install
+   npm install -g expo-cli
+   npm install
    ```
 
 3. Start the development server
    ```bash
-  npx expo start
+   npx expo start
    ```
 This will then open Expo Dev Tools in your browser.
 
@@ -31,9 +31,9 @@ This will then open Expo Dev Tools in your browser.
 If you would like to contribute, please follow these steps: 
 
 1. Fork the repository
-2. Create a feature branch: ```bash git checkout -b feature/some-feature '''
-3. Commit your changes: ''' bash git commit -m "Add some feature" '''
-4. Push to your branch: ''' bash git push origin feature/some-feature '''
+2. Create a feature branch: ```bash git checkout -b feature/some-feature ```
+3. Commit your changes: ```bash git commit -m "Add some feature" ```
+4. Push to your branch: ```bash git push origin feature/some-feature ```
 5.Open a Pull Request and describe your changes
 
 Please follow the existing code style and ensure tests pass before submitting.
