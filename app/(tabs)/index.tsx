@@ -30,6 +30,91 @@ export default function FoodSearchPage() {
     return '#aaa';
   };
 
+  // Function to normalize product names for comparison
+  const normalizeProductName = (name) => {
+    if (!name) return '';
+    return name
+      .toLowerCase()
+      .replace(/[^\w\s]/g, '') // Remove special characters
+      .replace(/\s+/g, ' ') // Normalize whitespace
+      .replace(/\b(original|classic|traditional|regular)\b/g, '') // Remove common variants
+      .replace(/\b\d+\s*(g|kg|ml|l|oz|lb)\b/g, '') // Remove weights/volumes
+      .replace(/\b(pack|jar|bottle|can|box)\b/g, '') // Remove packaging words
+      .trim();
+  };
+
+  // Function to calculate similarity between two strings
+  const calculateSimilarity = (str1, str2) => {
+    const longer = str1.length > str2.length ? str1 : str2;
+    const shorter = str1.length > str2.length ? str2 : str1;
+    const editDistance = getEditDistance(longer, shorter);
+    return (longer.length - editDistance) / longer.length;
+  };
+
+  // Levenshtein distance calculation
+  const getEditDistance = (str1, str2) => {
+    const matrix = [];
+    for (let i = 0; i <= str2.length; i++) {
+      matrix[i] = [i];
+    }
+    for (let j = 0; j <= str1.length; j++) {
+      matrix[0][j] = j;
+    }
+    for (let i = 1; i <= str2.length; i++) {
+      for (let j = 1; j <= str1.length; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+    return matrix[str2.length][str1.length];
+  };
+
+  // Method 1: Simple name-based deduplication
+  const deduplicateByName = (products) => {
+    const seen = new Set();
+    return products.filter(product => {
+      const normalized = normalizeProductName(product.product_name);
+      if (seen.has(normalized)) {
+        return false;
+      }
+      seen.add(normalized);
+      return true;
+    });
+  };
+
+
+  // Helper function to score product quality (for choosing best duplicate)
+  const getProductQualityScore = (product) => {
+    let score = 0;
+    
+    // Prefer products with images
+    if (product.image_front_small_url) score += 2;
+    
+    // Prefer products with eco score
+    if (product.ecoscore_grade) score += 2;
+    
+    // Prefer products with nutrition grade
+    if (product.nutrition_grades) score += 2;
+    
+    // Prefer products with carbon footprint data
+    if (product.carbon_footprint_100g !== undefined) score += 1;
+    
+    // Prefer products with more complete names (less likely to be partial/broken)
+    if (product.product_name && product.product_name.length > 10) score += 1;
+    
+    // Prefer products with brand information
+    if (product.brands) score += 1;
+    
+    return score;
+  };
+
   const searchProducts = async () => {
     if (!query.trim()) return;
 
@@ -42,21 +127,29 @@ export default function FoodSearchPage() {
         `&search_simple=1` +
         `&action=process` +
         `&json=1` +
-        `&fields=product_name,ecoscore_grade,ecoscore_score,carbon_footprint_100g,image_front_small_url,countries_tags,code` +
+        `&fields=product_name,ecoscore_grade,ecoscore_score,carbon_footprint_100g,image_front_small_url,countries_tags,code,brands,nutrition_grades,packaging` +
         `&countries_tags=singapore` +
         `&lang=en` +
-        `&page_size=20`;
+        `&page_size=50`; // Increased to get more results before filtering
 
       const response = await fetch(url);
       const json = await response.json();
 
       if (json.products) {
-        const filtered = json.products.filter(p =>
+        let filtered = json.products.filter(p =>
           p.product_name &&
           p.countries_tags?.includes('en:singapore') &&
           (p.ecoscore_grade || p.carbon_footprint_100g !== undefined)
         );
-        setProducts(filtered);
+        
+        // Apply deduplication - Simple name-based 
+       filtered = deduplicateByName(filtered);
+
+        // Sort by quality score to show best products first
+        filtered.sort((a, b) => getProductQualityScore(b) - getProductQualityScore(a));
+        
+        // Limit final results
+        setProducts(filtered.slice(0, 15));
       }
     } catch (error) {
       console.error('Search error:', error);
@@ -71,6 +164,7 @@ export default function FoodSearchPage() {
     const packaging = item.packaging || 'N/A';
     const productName = item.product_name || 'Unnamed product';
     const imageUrl = item.image_front_small_url || null;
+    const brand = item.brands?.split(',')[0]?.trim() || '';
 
     return (
       <TouchableOpacity
@@ -87,6 +181,7 @@ export default function FoodSearchPage() {
           )}
           <View style={styles.info}>
             <Text style={styles.productName}>{productName}</Text>
+            {brand && <Text style={styles.brand}>{brand}</Text>}
             <View style={styles.scoresRow}>
               <View style={[styles.scoreBadge, { backgroundColor: scoreColor(nutriScore) }]}>
                 <Text style={styles.scoreText}>Nutri: {nutriScore ? nutriScore.toUpperCase() : '?'}</Text>
@@ -162,7 +257,8 @@ const styles = StyleSheet.create({
   image: { width: 80, height: 80, borderRadius: 8, backgroundColor: '#eee' },
   imagePlaceholder: { justifyContent: 'center', alignItems: 'center' },
   info: { flex: 1, paddingLeft: 12, justifyContent: 'center' },
-  productName: { fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
+  productName: { fontSize: 16, fontWeight: 'bold', marginBottom: 4 },
+  brand: { fontSize: 14, color: '#666', marginBottom: 6, fontStyle: 'italic' },
   scoresRow: { flexDirection: 'row', marginBottom: 6 },
   scoreBadge: {
     paddingVertical: 4,
