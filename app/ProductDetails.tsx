@@ -40,10 +40,10 @@ export default function ProductDetails() {
   }
 
   // Helper function to generate icon rating
-  const renderIcons = (count, icon, color) => {
+  const renderIcons = (count, icon) => {
     if (count === null || count === undefined) return <Text style={styles.iconText}>N/A</Text>;
     return (
-      <Text style={[styles.iconText, { color }]}>
+      <Text style={styles.iconText}>
         {icon.repeat(Math.round(count))}
         {'\u00A0'.repeat(5 - Math.round(count))} {/* Non-breaking spaces for alignment */}
       </Text>
@@ -53,7 +53,6 @@ export default function ProductDetails() {
   // Eco-Score icons (0-100 score to 1-5 leaves)
   const ecoScore = product.ecoscore_score;
   const ecoCount = ecoScore !== undefined ? ecoScore / 20 : null;
-  const ecoColor = ecoCount ? `rgb(${255 - ecoCount * 50}, ${100 + ecoCount * 30}, 0)` : '#000'; // Dark to light green
   const ecoDescription = ecoCount
     ? ecoScore >= 80
       ? `This product has a high Eco-Score, indicating a low environmental impact on land use, biodiversity, and climate. It's a sustainable choice!`
@@ -72,15 +71,13 @@ export default function ProductDetails() {
     else if (carbonFootprint <= 10) carbonCount = 2;
     else carbonCount = 1;
   }
-  const carbonColor = carbonCount ? `rgb(0, ${100 + carbonCount * 30}, ${255 - carbonCount * 50})` : '#000'; // Dark to light blue
   const carbonDescription = carbonFootprint
-    ? `Measures CO2 emissions from production. This product's ${carbonFootprint.toFixed(2)} kg CO2e/kg is like driving ${Math.round(carbonFootprint * 4)} km in a typical car.`
+    ? `Measures CO2 emissions from production. This product's ${carbonFootprint.toFixed(2)} kg CO2e/kg is like driving ${Math.round(carbonFootprint * 4)} km in a typical car, e.g., a round trip across a small city.`
     : 'No data available.';
 
   // Packaging Sustainability icons (0-100 score to 1-5 recycle symbols)
   const packagingScore = product.ecoscore_data?.adjustments?.packaging?.score;
   const packagingCount = packagingScore !== undefined ? packagingScore / 20 : null;
-  const packagingColor = packagingCount ? `rgb(${100 + packagingCount * 30}, ${50 + packagingCount * 20}, 0)` : '#000'; // Dark to light brown
   const packagingDescription = packagingScore
     ? `Evaluates waste and resource use. A score of ${packagingScore.toFixed(1)} means ${packagingScore > 70 ? 'high recyclability' : 'significant landfill waste'}, impacting resource conservation.`
     : 'No data available.';
@@ -103,21 +100,21 @@ export default function ProductDetails() {
         <View style={styles.iconSection}>
           <View style={styles.iconRow}>
             <Text style={styles.label}>Eco-Score:</Text>
-            {renderIcons(ecoCount, '🍃', ecoColor)}
+            {renderIcons(ecoCount, '🍃')}
           </View>
           <Text style={styles.description}>{ecoDescription}</Text>
         </View>
         <View style={styles.iconSection}>
           <View style={styles.iconRow}>
             <Text style={styles.label}>Carbon Footprint:</Text>
-            {renderIcons(carbonCount, '☁️', carbonColor)}
+            {renderIcons(carbonCount, '☁️')}
           </View>
           <Text style={styles.description}>{carbonDescription}</Text>
         </View>
         <View style={styles.iconSection}>
           <View style={styles.iconRow}>
             <Text style={styles.label}>Packaging Sustainability:</Text>
-            {renderIcons(packagingCount, '♻️', packagingColor)}
+            {renderIcons(packagingCount, '♻️')}
           </View>
           <Text style={styles.description}>{packagingDescription}</Text>
         </View>
