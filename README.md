@@ -1,50 +1,44 @@
-# Welcome to your Expo app 👋
+# Welcome to EcoChoice
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+EcoChoice is a mobile app that helps supermarket shoppers make environmentally friendly choices by providing an overall sustainability score with a detailed breakdown. It empowers users to choose options that are better for the planet while grocery shopping.
 
-## Get started
+## Set up & Installation
 
-1. Install dependencies
-
+1. Clone the repo
    ```bash
-   npm install
+   git clone https://github.com/brandontwj1/EcoChoice.git
+   cd EcoChoice
+   ```
+   
+2. Install dependencies
+   Make sure you have Node.js and Expo CLI installed
+   ```bash
+  npm install -g expo-cli
+  npm install
    ```
 
-2. Start the app
-
+3. Start the development server
    ```bash
-   npx expo start
+  npx expo start
    ```
+This will then open Expo Dev Tools in your browser.
 
-In the output, you'll find options to open the app in a
+4. Run the app on your device
+- On physical device: Install the Expo Go app from the App Store or Google Play. Scan the QR code in the terminal or browser.
+- On simulator/emulator: Press i to launch iOS Simulator (Mac only) or a to launch Android Emulator if installed.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Contributing
+If you would like to contribute, please follow these steps: 
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+1. Fork the repository
+2. Create a feature branch: ```bash git checkout -b feature/some-feature '''
+3. Commit your changes: ''' bash git commit -m "Add some feature" '''
+4. Push to your branch: ''' bash git push origin feature/some-feature '''
+5.Open a Pull Request and describe your changes
 
-## Get a fresh project
+Please follow the existing code style and ensure tests pass before submitting.
 
-When you're ready, run:
+## Contact 
+Got any feedback or questions? Open an issue or reach out at nichellepeien@gmail.com
 
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+# Thank you for using EcoChoice! 
