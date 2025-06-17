@@ -39,6 +39,52 @@ export default function ProductDetails() {
     );
   }
 
+  // Helper function to generate icon rating
+  const renderIcons = (count, icon, color) => {
+    if (count === null || count === undefined) return <Text style={styles.iconText}>N/A</Text>;
+    return (
+      <Text style={[styles.iconText, { color }]}>
+        {icon.repeat(Math.round(count))}
+        {'\u00A0'.repeat(5 - Math.round(count))} {/* Non-breaking spaces for alignment */}
+      </Text>
+    );
+  };
+
+  // Eco-Score icons (0-100 score to 1-5 leaves)
+  const ecoScore = product.ecoscore_score;
+  const ecoCount = ecoScore !== undefined ? ecoScore / 20 : null;
+  const ecoColor = ecoCount ? `rgb(${255 - ecoCount * 50}, ${100 + ecoCount * 30}, 0)` : '#000'; // Dark to light green
+  const ecoDescription = ecoCount
+    ? ecoScore >= 80
+      ? `This product has a high Eco-Score, indicating a low environmental impact on land use, biodiversity, and climate. It's a sustainable choice!`
+      : ecoScore >= 60
+      ? `This product has a moderate Eco-Score, with a balanced impact on land use and biodiversity. Consider more sustainable options for a greater positive effect.`
+      : `This product has a lower Eco-Score, suggesting a higher environmental impact, potentially affecting land use and biodiversity. Choosing alternatives with higher scores can help reduce harm.`
+    : 'No data available.';
+
+  // Carbon Footprint icons (lower CO2e/kg is better)
+  const carbonFootprint = product.ecoscore_data?.agribalyse?.co2_total;
+  let carbonCount = null;
+  if (carbonFootprint !== undefined) {
+    if (carbonFootprint < 1) carbonCount = 5;
+    else if (carbonFootprint <= 3) carbonCount = 4;
+    else if (carbonFootprint <= 5) carbonCount = 3;
+    else if (carbonFootprint <= 10) carbonCount = 2;
+    else carbonCount = 1;
+  }
+  const carbonColor = carbonCount ? `rgb(0, ${100 + carbonCount * 30}, ${255 - carbonCount * 50})` : '#000'; // Dark to light blue
+  const carbonDescription = carbonFootprint
+    ? `Measures CO2 emissions from production. This product's ${carbonFootprint.toFixed(2)} kg CO2e/kg is like driving ${Math.round(carbonFootprint * 4)} km in a typical car.`
+    : 'No data available.';
+
+  // Packaging Sustainability icons (0-100 score to 1-5 recycle symbols)
+  const packagingScore = product.ecoscore_data?.adjustments?.packaging?.score;
+  const packagingCount = packagingScore !== undefined ? packagingScore / 20 : null;
+  const packagingColor = packagingCount ? `rgb(${100 + packagingCount * 30}, ${50 + packagingCount * 20}, 0)` : '#000'; // Dark to light brown
+  const packagingDescription = packagingScore
+    ? `Evaluates waste and resource use. A score of ${packagingScore.toFixed(1)} means ${packagingScore > 70 ? 'high recyclability' : 'significant landfill waste'}, impacting resource conservation.`
+    : 'No data available.';
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       {product.image_front_url ? (
@@ -51,8 +97,31 @@ export default function ProductDetails() {
       <Text style={styles.name}>{product.product_name || 'Unnamed product'}</Text>
       <Text style={styles.detail}>Brand: {product.brands || 'N/A'}</Text>
       <Text style={styles.detail}>Quantity: {product.quantity || 'N/A'}</Text>
-      <Text style={styles.detail}>Nutri-Score: {product.nutrition_grades || 'N/A'}</Text>
-      <Text style={styles.detail}>Eco-Score: {product.ecoscore_grade || 'N/A'}</Text>
+      <Text style={styles.detail}>Nutri-Score: {product.nutrition_grades?.toUpperCase() || 'N/A'}</Text>
+      <View style={styles.scoresSection}>
+        <Text style={styles.scoresTitle}>Scores (out of 5 icons)</Text>
+        <View style={styles.iconSection}>
+          <View style={styles.iconRow}>
+            <Text style={styles.label}>Eco-Score:</Text>
+            {renderIcons(ecoCount, '🍃', ecoColor)}
+          </View>
+          <Text style={styles.description}>{ecoDescription}</Text>
+        </View>
+        <View style={styles.iconSection}>
+          <View style={styles.iconRow}>
+            <Text style={styles.label}>Carbon Footprint:</Text>
+            {renderIcons(carbonCount, '☁️', carbonColor)}
+          </View>
+          <Text style={styles.description}>{carbonDescription}</Text>
+        </View>
+        <View style={styles.iconSection}>
+          <View style={styles.iconRow}>
+            <Text style={styles.label}>Packaging Sustainability:</Text>
+            {renderIcons(packagingCount, '♻️', packagingColor)}
+          </View>
+          <Text style={styles.description}>{packagingDescription}</Text>
+        </View>
+      </View>
       <Text style={styles.detail}>Packaging: {product.packaging || 'N/A'}</Text>
       <Text style={styles.detail}>Categories: {product.categories || 'N/A'}</Text>
       <Text style={styles.detail}>Ingredients: {product.ingredients_text || 'N/A'}</Text>
@@ -68,4 +137,11 @@ const styles = StyleSheet.create({
   imagePlaceholder: { justifyContent: 'center', alignItems: 'center' },
   name: { fontSize: 22, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
   detail: { fontSize: 16, marginBottom: 6, textAlign: 'center' },
+  scoresSection: { width: '100%', marginBottom: 12 },
+  scoresTitle: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 },
+  iconSection: { width: '100%', marginBottom: 12 },
+  iconRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4, justifyContent: 'center' },
+  label: { fontSize: 16, marginRight: 10, textAlign: 'right', flex: 1 },
+  iconText: { fontSize: 16, flex: 1, textAlign: 'left' },
+  description: { fontSize: 14, color: '#666', textAlign: 'center', paddingHorizontal: 10, marginBottom: 4 },
 });
