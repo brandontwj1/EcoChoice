@@ -2,6 +2,7 @@ import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+
 export default function ProductDetails() {
   const { code } = useLocalSearchParams();
   const [product, setProduct] = useState(null);
@@ -26,7 +27,7 @@ export default function ProductDetails() {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color="#4CAF50" />
       </View>
     );
   }
@@ -34,20 +35,19 @@ export default function ProductDetails() {
   if (!product) {
     return (
       <View style={styles.centered}>
-        <Text>Product not found.</Text>
+        <Text style={styles.notFound}>Product not found.</Text>
       </View>
     );
   }
 
-<<<<<<< HEAD
-=======
   // Helper function to generate icon rating
   const renderIcons = (count, icon) => {
-    if (count === null || count === undefined) return <Text style={styles.iconText}>N/A</Text>;
+    if (!Number.isFinite(count) || count <= 0) return <Text style={styles.iconTextLarge}>N/A</Text>;
+    const rounded = Math.max(0, Math.min(5, Math.round(count)));
     return (
-      <Text style={styles.iconText}>
-        {icon.repeat(Math.round(count))}
-        {'\u00A0'.repeat(5 - Math.round(count))} {/* Non-breaking spaces for alignment */}
+      <Text style={styles.iconTextLarge}>
+        {icon.repeat(rounded)}
+        {'\u00A0'.repeat(5 - rounded)}
       </Text>
     );
   };
@@ -57,10 +57,10 @@ export default function ProductDetails() {
   const ecoCount = ecoScore !== undefined ? ecoScore / 20 : null;
   const ecoDescription = ecoCount
     ? ecoScore >= 80
-      ? `This product has a high Eco-Score, indicating a low environmental impact on land use, biodiversity, and climate. It's a sustainable choice!`
+      ? `🌱 Excellent Eco-Score! This product has a low environmental impact.`
       : ecoScore >= 60
-      ? `This product has a moderate Eco-Score, with a balanced impact on land use and biodiversity. Consider more sustainable options for a greater positive effect.`
-      : `This product has a lower Eco-Score, suggesting a higher environmental impact, potentially affecting land use and biodiversity. Choosing alternatives with higher scores can help reduce harm.`
+      ? `🌿 Good Eco-Score. This product is fairly sustainable.`
+      : `🍂 Low Eco-Score. Consider more sustainable alternatives.`
     : 'No data available.';
 
   // Carbon Footprint icons (lower CO2e/kg is better)
@@ -74,82 +74,337 @@ export default function ProductDetails() {
     else carbonCount = 1;
   }
   const carbonDescription = carbonFootprint
-    ? `Measures CO2 emissions from production. This product's ${carbonFootprint.toFixed(2)} kg CO2e/kg is like driving ${Math.round(carbonFootprint * 4)} km in a typical car, e.g., a round trip across a small city.`
+    ? carbonFootprint < 1
+      ? `🌍 Excellent! With CO₂ emissions of ${carbonFootprint.toFixed(2)} kg CO₂e/kg, this product has a very low carbon footprint.`
+      : carbonFootprint <= 3
+      ? `🌱 Good! With CO₂ emissions of ${carbonFootprint.toFixed(2)} kg CO₂e/kg, this product is relatively low in CO₂ emissions.`
+      : carbonFootprint <= 5
+      ? `🍃 Moderate CO₂ emissions. Consider alternatives with lower impact!`
+      : carbonFootprint <= 10
+      ? `🌿 High CO₂ emissions. Look for greener options.`
+      : `🌍 Very high CO₂ emissions. Avoid if possible.`
     : 'No data available.';
 
   // Packaging Sustainability icons (0-100 score to 1-5 recycle symbols)
   const packagingScore = product.ecoscore_data?.adjustments?.packaging?.score;
   const packagingCount = packagingScore !== undefined ? packagingScore / 20 : null;
-  const packagingDescription = packagingScore
-    ? `Evaluates waste and resource use. A score of ${packagingScore.toFixed(1)} means ${packagingScore > 70 ? 'high recyclability' : 'significant landfill waste'}, impacting resource conservation.`
-    : 'No data available.';
+  let packagingDescription = 'No data available.';
+  if (typeof packagingScore === 'number') {
+    if (packagingScore >= 90) {
+      packagingDescription = "♻️ Excellent! Packaging is highly recyclable and eco-friendly.";
+    } else if (packagingScore >= 70) {
+      packagingDescription = "✅ Good! Packaging is mostly recyclable with minimal waste.";
+    } else if (packagingScore >= 50) {
+      packagingDescription = "♻️ Moderate. Packaging is partially recyclable, but could be improved.";
+    } else if (packagingScore >= 30) {
+      packagingDescription = "⚠️ Low. Packaging is mostly non-recyclable and generates waste.";
+    } else {
+      packagingDescription = "🗑️ Poor. Packaging is not recyclable and has a high environmental impact.";
+    }
+  }
 
->>>>>>> prodPage
+  const ecoScoreValue = typeof ecoScore === 'number' ? ecoScore : null;
+  const carbonScoreValue = typeof carbonFootprint === 'number'
+    ? Math.max(0, Math.min(100, 100 - (carbonFootprint * 10))) // Lower CO2 is better, scale: 0kg = 100, 10kg = 0
+    : null;
+  const packagingScoreValue = typeof packagingScore === 'number' ? packagingScore : null;
+
+  // Only include available scores in the average
+  const scoreValues = [ecoScoreValue, carbonScoreValue, packagingScoreValue].filter(v => typeof v === 'number');
+  const overallScore = scoreValues.length > 0
+    ? Math.round(scoreValues.reduce((a, b) => a + b, 0) / scoreValues.length)
+    : null;
+
+  // Helper for ring color
+  const getRingColor = (score) => {
+    if (score === null) return '#ccc';
+    if (score >= 80) return '#4CAF50';
+    if (score >= 60) return '#8BC34A';
+    if (score >= 40) return '#FFC107';
+    if (score >= 20) return '#FF9800';
+    return '#F44336';
+  };
+
+  // Helper for overall description
+  const getOverallDescription = (score) => {
+    if (score === null) return "No overall sustainability data available.";
+    if (score >= 90) return "🌟 Outstanding sustainability!";
+    if (score >= 75) return "✅ Very good sustainability.";
+    if (score >= 60) return "👍 Good sustainability.";
+    if (score >= 40) return "⚠️ Moderate sustainability. Could be improved.";
+    if (score >= 20) return "❗ Low sustainability. Consider alternatives.";
+    return "🚫 Very low sustainability. Avoid if possible.";
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      {product.image_front_url ? (
-        <Image source={{ uri: product.image_front_url }} style={styles.image} />
-      ) : (
-        <View style={[styles.image, styles.imagePlaceholder]}>
-          <Text style={{ color: '#888' }}>No Image</Text>
+      <View style={styles.productRow}>
+        {product.image_front_url ? (
+          <Image source={{ uri: product.image_front_url }} style={styles.image} />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]}>
+            <Text style={{ color: '#888' }}>No Image</Text>
+          </View>
+        )}
+        <View style={styles.productInfoEven}>
+          <Text style={styles.name} numberOfLines={2} ellipsizeMode="tail">
+            {product.product_name || 'Unnamed product'}
+          </Text>
+          <Text style={styles.brand} numberOfLines={1} ellipsizeMode="tail">
+            {product.brands || 'Unknown brand'}
+          </Text>
+          <View style={styles.quantityRow}>
+            <Text style={styles.quantityLabel}>Quantity:</Text>
+            <Text style={styles.quantityValue}>{product.quantity || 'N/A'}</Text>
+          </View>
         </View>
-      )}
-      <Text style={styles.name}>{product.product_name || 'Unnamed product'}</Text>
-      <Text style={styles.detail}>Brand: {product.brands || 'N/A'}</Text>
-      <Text style={styles.detail}>Quantity: {product.quantity || 'N/A'}</Text>
-<<<<<<< HEAD
-      <Text style={styles.detail}>Nutri-Score: {product.nutrition_grades || 'N/A'}</Text>
-      <Text style={styles.detail}>Eco-Score: {product.ecoscore_grade || 'N/A'}</Text>
-=======
-      <Text style={styles.detail}>Nutri-Score: {product.nutrition_grades?.toUpperCase() || 'N/A'}</Text>
+      </View>
+
+      <View style={styles.overallSection}>
+        <Text style={styles.overallTitle}>Overall Sustainability Rating</Text>
+        <View style={styles.overallRingContainer}>
+          <View style={[
+            styles.ring,
+            { borderColor: getRingColor(overallScore) }
+          ]}>
+            <Text style={styles.ringText}>
+              {overallScore !== null ? `${overallScore}` : 'N/A'}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.overallDescription}>{getOverallDescription(overallScore)}</Text>
+      </View>
+
       <View style={styles.scoresSection}>
-        <Text style={styles.scoresTitle}>Scores (out of 5 icons)</Text>
-        <View style={styles.iconSection}>
+        <Text style={styles.scoresTitle}>Sustainability Scores</Text>
+        <View style={styles.scoreCard}>
           <View style={styles.iconRow}>
-            <Text style={styles.label}>Eco-Score:</Text>
+            <Text style={styles.labelLarge}>Eco Score</Text>
             {renderIcons(ecoCount, '🍃')}
           </View>
           <Text style={styles.description}>{ecoDescription}</Text>
         </View>
-        <View style={styles.iconSection}>
+        <View style={styles.scoreCard}>
           <View style={styles.iconRow}>
-            <Text style={styles.label}>Carbon Footprint:</Text>
-            {renderIcons(carbonCount, '☁️')}
+            <Text style={styles.labelLarge}>Carbon Score</Text>
+            {renderIcons(carbonCount, '🌎')}
           </View>
           <Text style={styles.description}>{carbonDescription}</Text>
         </View>
-        <View style={styles.iconSection}>
+        <View style={styles.scoreCard}>
           <View style={styles.iconRow}>
-            <Text style={styles.label}>Packaging Sustainability:</Text>
+            <Text style={styles.labelLarge}>Packaging</Text>
             {renderIcons(packagingCount, '♻️')}
           </View>
           <Text style={styles.description}>{packagingDescription}</Text>
         </View>
       </View>
->>>>>>> prodPage
-      <Text style={styles.detail}>Packaging: {product.packaging || 'N/A'}</Text>
-      <Text style={styles.detail}>Categories: {product.categories || 'N/A'}</Text>
-      <Text style={styles.detail}>Ingredients: {product.ingredients_text || 'N/A'}</Text>
-      <Text style={styles.detail}>Countries Sold: {product.countries || 'N/A'}</Text>
+
+    
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', padding: 20, backgroundColor: '#fff' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
-  image: { width: 180, height: 180, borderRadius: 12, backgroundColor: '#eee', marginBottom: 16 },
-  imagePlaceholder: { justifyContent: 'center', alignItems: 'center' },
-  name: { fontSize: 22, fontWeight: 'bold', marginBottom: 10, textAlign: 'center' },
-  detail: { fontSize: 16, marginBottom: 6, textAlign: 'center' },
-<<<<<<< HEAD
-=======
-  scoresSection: { width: '100%', marginBottom: 12 },
-  scoresTitle: { fontSize: 18, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 },
-  iconSection: { width: '100%', marginBottom: 12 },
-  iconRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4, justifyContent: 'center' },
-  label: { fontSize: 16, marginRight: 10, textAlign: 'right', flex: 1 },
-  iconText: { fontSize: 16, flex: 1, textAlign: 'left' },
-  description: { fontSize: 14, color: '#666', textAlign: 'center', paddingHorizontal: 10, marginBottom: 4 },
->>>>>>> prodPage
+  container: {
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#f8faf7',
+    minHeight: '100%',
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8faf7',
+  },
+  notFound: {
+    fontSize: 18,
+    color: '#c00',
+    fontWeight: 'bold',
+  },
+  productRow: {
+    flexDirection: 'row',
+    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  image: {
+    width: 110,
+    height: 110,
+    borderRadius: 12,
+    backgroundColor: '#eee',
+    marginRight: 18,
+  },
+  imagePlaceholder: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  productInfoEven: {
+    flex: 1,
+    justifyContent: 'space-between',
+    paddingLeft: 6,
+    height: 110, // Match image height for even vertical spacing
+  },
+  name: {
+    fontSize: 23,
+    fontWeight: 'bold',
+    color: '#222',
+    textAlign: 'left',
+    flexWrap: 'wrap',
+    letterSpacing: 0.3,
+  },
+  brand: {
+    fontSize: 17,
+    color: '#388e3c',
+    fontWeight: '600',
+    textAlign: 'left',
+    flexWrap: 'wrap',
+    letterSpacing: 0.2,
+  },
+  quantityRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  quantityLabel: {
+    fontSize: 15,
+    color: 'black',
+    fontWeight: '600',
+    marginRight: 8,
+  },
+  quantityValue: {
+    fontSize: 15,
+    color: '#222',
+    fontWeight: '600',
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+    marginTop: 2,
+  },
+  infoLabel: {
+    fontSize: 16,
+    color: '#666',
+    fontWeight: '500',
+    marginRight: 6,
+  },
+  infoValue: {
+    fontSize: 16,
+    color: '#222',
+    fontWeight: '600',
+  },
+  scoresSection: {
+    width: '100%',
+    marginTop: 8,
+    marginBottom: 0,
+  },
+  scoresTitle: {
+    fontSize: 21,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 18,
+    color: '#388e3c',
+    letterSpacing: 0.5,
+  },
+  scoreCard: {
+    backgroundColor: '#f0f7f4',
+    borderRadius: 12,
+    padding: 18,
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 1,
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    textAlign: 'right',
+    marginBottom: 6,
+    justifyContent: 'space-between',
+  },
+  labelLarge: {
+    fontSize: 18,
+    color: '#222',
+    fontWeight: '700',
+    flex: 2,
+    letterSpacing: 0.2,
+    textAlign: 'left',
+  },
+  iconTextLarge: {
+    fontSize: 22,
+    flex: 3,
+    textAlign: 'right',
+    letterSpacing: 3,
+  },
+  description: {
+    fontSize: 15,
+    color: '#666',
+    textAlign: 'left',
+    paddingHorizontal: 2,
+    marginTop: 2,
+    lineHeight: 20,
+  },
+  overallSection: {
+  width: '100%',
+  alignItems: 'center',
+  marginTop: 0,
+  marginBottom: 10,
+  paddingVertical: 12,
+  },  
+  overallTitle: {
+    fontSize: 21,
+    fontWeight: 'bold',
+    color: '#388e3c',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  overallRingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+    marginTop: 2,
+  },
+  ring: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    borderWidth: 7,
+    borderColor: '#4CAF50',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8faf7',
+    marginBottom: 2,
+  },
+  ringText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#222',
+    textAlign: 'center',
+    lineHeight: 38,
+  },
+  ringSubtext: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: -4,
+  },
+  overallDescription: {
+    fontSize: 15,
+    color: '#444',
+    textAlign: 'center',
+    marginTop: 6,
+    lineHeight: 20,
+  },
 });

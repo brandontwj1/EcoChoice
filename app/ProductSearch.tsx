@@ -208,7 +208,7 @@ export default function FoodSearchPage() {
           onSubmitEditing={searchProducts}
           returnKeyType="search"
         />
-        <Button title="Search" onPress={searchProducts} />
+        <Button title="Search" onPress={searchProducts} color="#388e3c" />
       </View>
 
       {loading && <ActivityIndicator size="large" style={{ marginTop: 20 }} />}

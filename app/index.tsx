@@ -13,7 +13,7 @@ export default function WelcomeScreen() {
       <Text style={styles.title}>Welcome to Ecochoice!</Text>
       <Text style={styles.subtitle}>Shop Smarter. Live Greener. </Text>
 
-      <TouchableOpacity style={styles.button} onPress={() => router.push('(tabs)')}>
+      <TouchableOpacity style={styles.button} onPress={() => router.push('ProductSearch')}>
         <Text style={styles.buttonText}>Get Started</Text>
       </TouchableOpacity>
     </View>
