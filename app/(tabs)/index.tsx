@@ -139,7 +139,7 @@ export default function FoodSearchPage() {
         let filtered = json.products.filter(p =>
           p.product_name &&
           p.countries_tags?.includes('en:singapore') &&
-          (p.ecoscore_grade || p.carbon_footprint_100g !== undefined)
+          (typeof p.ecoscore_score === 'number' || typeof p.carbon_footprint_100g === 'number')
         );
         
         // Apply deduplication - Simple name-based 
@@ -183,14 +183,13 @@ export default function FoodSearchPage() {
             <Text style={styles.productName}>{productName}</Text>
             {brand && <Text style={styles.brand}>{brand}</Text>}
             <View style={styles.scoresRow}>
-              <View style={[styles.scoreBadge, { backgroundColor: scoreColor(nutriScore) }]}>
-                <Text style={styles.scoreText}>Nutri: {nutriScore ? nutriScore.toUpperCase() : '?'}</Text>
-              </View>
-              <View style={[styles.scoreBadge, { backgroundColor: scoreColor(ecoScore) }]}>
-                <Text style={styles.scoreText}>Eco: {ecoScore ? ecoScore.toUpperCase() : '?'}</Text>
+            <View style={[styles.scoreBadge, { backgroundColor: scoreColor(ecoScore) }]}>
+              <Text style={styles.scoreText}>Eco: {ecoScore ? ecoScore.toUpperCase() : '?'}</Text>
               </View>
             </View>
-            <Text style={styles.packaging}>Packaging: {packaging}</Text>
+            <Text style={styles.packaging}>
+              Carbon: {item.carbon_footprint_100g !== undefined ? `${item.carbon_footprint_100g}g CO₂/100g` : 'N/A'}
+              </Text>
           </View>
         </View>
       </TouchableOpacity>
