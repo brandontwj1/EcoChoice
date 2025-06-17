@@ -1,75 +1,175 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Button,
+  FlatList,
+  Image,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function FoodSearchPage() {
+  const [query, setQuery] = useState('');
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
-export default function HomeScreen() {
+  const scoreColor = (score) => {
+    if (!score) return '#aaa';
+    const c = score.toUpperCase();
+    if (c === 'A') return '#4CAF50';
+    if (c === 'B') return '#8BC34A';
+    if (c === 'C') return '#FFC107';
+    if (c === 'D') return '#FF9800';
+    if (c === 'E') return '#F44336';
+    return '#aaa';
+  };
+
+  const searchProducts = async () => {
+    if (!query.trim()) return;
+
+    setLoading(true);
+    setProducts([]);
+
+    try {
+      const url = `https://world.openfoodfacts.org/cgi/search.pl?` +
+        `search_terms=${encodeURIComponent(query)}` +
+        `&search_simple=1` +
+        `&action=process` +
+        `&json=1` +
+        `&fields=product_name,ecoscore_grade,ecoscore_score,carbon_footprint_100g,image_front_small_url,countries_tags,code` +
+        `&countries_tags=singapore` +
+        `&lang=en` +
+        `&page_size=20`;
+
+      const response = await fetch(url);
+      const json = await response.json();
+
+      if (json.products) {
+        const filtered = json.products.filter(p =>
+          p.product_name &&
+          p.countries_tags?.includes('en:singapore') &&
+          (p.ecoscore_grade || p.carbon_footprint_100g !== undefined)
+        );
+        setProducts(filtered);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+    }
+
+    setLoading(false);
+  };
+
+  const renderItem = ({ item }) => {
+    const nutriScore = item.nutrition_grades || null;
+    const ecoScore = item.ecoscore_grade || null;
+    const packaging = item.packaging || 'N/A';
+    const productName = item.product_name || 'Unnamed product';
+    const imageUrl = item.image_front_small_url || null;
+
+    return (
+      <TouchableOpacity
+        onPress={() => router.push({ pathname: '/ProductDetails', params: { code: item.code } })}
+        activeOpacity={0.7}
+      >
+        <View style={styles.card}>
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={styles.image} />
+          ) : (
+            <View style={[styles.image, styles.imagePlaceholder]}>
+              <Text style={{ color: '#888' }}>No Image</Text>
+            </View>
+          )}
+          <View style={styles.info}>
+            <Text style={styles.productName}>{productName}</Text>
+            <View style={styles.scoresRow}>
+              <View style={[styles.scoreBadge, { backgroundColor: scoreColor(nutriScore) }]}>
+                <Text style={styles.scoreText}>Nutri: {nutriScore ? nutriScore.toUpperCase() : '?'}</Text>
+              </View>
+              <View style={[styles.scoreBadge, { backgroundColor: scoreColor(ecoScore) }]}>
+                <Text style={styles.scoreText}>Eco: {ecoScore ? ecoScore.toUpperCase() : '?'}</Text>
+              </View>
+            </View>
+            <Text style={styles.packaging}>Packaging: {packaging}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>Sustainable Food Search</Text>
+      <View style={styles.searchRow}>
+        <TextInput
+          placeholder="Search a food product"
+          value={query}
+          onChangeText={setQuery}
+          style={styles.searchInput}
+          onSubmitEditing={searchProducts}
+          returnKeyType="search"
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <Button title="Search" onPress={searchProducts} />
+      </View>
+
+      {loading && <ActivityIndicator size="large" style={{ marginTop: 20 }} />}
+
+      {!loading && products.length === 0 && (
+        <Text style={{ marginTop: 20, color: '#666' }}>No products found. Try searching!</Text>
+      )}
+
+      {!loading && products.length > 0 && (
+        <FlatList
+          data={products}
+          keyExtractor={(item) => item.code}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: 100 }}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 12, textAlign: 'center' },
+  searchRow: { flexDirection: 'row', marginBottom: 12, alignItems: 'center' },
+  searchInput: {
+    flex: 1,
+    borderColor: '#ccc',
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 8,
+    fontSize: 16,
+  },
+  card: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: '#fafafa',
+    elevation: 1,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  image: { width: 80, height: 80, borderRadius: 8, backgroundColor: '#eee' },
+  imagePlaceholder: { justifyContent: 'center', alignItems: 'center' },
+  info: { flex: 1, paddingLeft: 12, justifyContent: 'center' },
+  productName: { fontSize: 16, fontWeight: 'bold', marginBottom: 6 },
+  scoresRow: { flexDirection: 'row', marginBottom: 6 },
+  scoreBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+    marginRight: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
+  scoreText: { color: '#fff', fontWeight: '600' },
+  packaging: { fontStyle: 'italic', color: '#555' },
 });
